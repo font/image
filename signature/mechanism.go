@@ -56,6 +56,12 @@ func NewEphemeralGPGSigningMechanism(blob []byte) (SigningMechanism, []string, e
 	return newEphemeralGPGSigningMechanism(blob)
 }
 
+// NewSigstoreSigningMechanism returns a new sigstore signing mechanism.
+// The caller must call .Close() on the returned SigningMechanism.
+func NewSigstoreSigningMechanism() (SigningMechanism, error) {
+	return newSigstoreSigningMechanism()
+}
+
 // gpgUntrustedSignatureContents returns UNTRUSTED contents of the signature WITHOUT ANY VERIFICATION,
 // along with a short identifier of the key used for signing.
 // WARNING: The short key identifier (which corresponds to "Key ID" for OpenPGP keys)
