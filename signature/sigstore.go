@@ -4,33 +4,51 @@ package signature
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	digest "github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
-	"github.com/sigstore/cosign/pkg/cosign/fulcio"
 )
 
-// SignManifest returns a signature for manifest as the specified dockerReference,
-// using mech and keyIdentity.
-func SignManifest(ctx context.Context, manifestDigest digest.Digest, dockerReference string, mech SigningMechanism) error {
+const (
+	serverEnv   = "REKOR_SERVER"
+	rekorServer = "https://rekor.sigstore.dev"
+)
+
+// TODO: SignManifest returns a signature for manifest as the specified dockerReference,
+// using mech and its keyless signing.
+func SignManifest(ctx context.Context, manifestDigest digest.Digest, dockerReference string, mech SigstoreSigningMechanism) ([]byte, []byte, error) {
 	sigPayload, err := newCosignSignature(manifestDigest, dockerReference).MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "payload")
+		return nil, nil, errors.Wrap(err, "payload")
 	}
 
-	signer, err := fulcio.NewSigner(ctx)
+	err = mech.InitSigner()
 	if err != nil {
-		return errors.Wrap(err, "getting key from Fulcio")
+		return nil, nil, errors.Wrap(err, "init signer")
 	}
 
-	//sig, _, err := signer.Sign(ctx, sigPayload)
-	_, _, err = signer.Sign(ctx, sigPayload)
-	if err != nil {
-		return errors.Wrap(err, "signing")
-	}
+	return mech.Sign(sigPayload)
+
+	//sigRef := signatureImageTagForDigest(string(manifestDigest))
+
+	//fmt.Println("Pushing signature to:", dockerReference)
 	// TODO: push to destination image
 	//manifestDigest
-	//sig, _, err := signer.Sign(ctx,
 	//return sig.sign(mech, keyIdentity)
-	return nil
+	//return nil
+}
+
+func signatureImageTagForDigest(digest string) string {
+	// sha256:... -> sha256-...
+	return strings.ReplaceAll(digest, ":", "-") + ".sig"
+}
+
+// TlogServer returns the name of the tlog server, can be overwritten via env var
+func tLogServer() string {
+	if s := os.Getenv(serverEnv); s != "" {
+		return s
+	}
+	return rekorServer
 }
