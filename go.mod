@@ -5,13 +5,12 @@ go 1.11
 require (
 	github.com/14rcole/gopopulate v0.0.0-20180821133914-b175b219e774 // indirect
 	github.com/BurntSushi/toml v0.3.1
-	github.com/containers/image v3.0.2+incompatible // indirect
 	github.com/containers/libtrust v0.0.0-20190913040956-14b96171aa3b
 	github.com/containers/ocicrypt v1.1.1
 	github.com/containers/storage v1.30.3
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.4.2-0.20191219165747-a9416c67da9f
-	github.com/docker/docker-credential-helpers v0.6.3
+	github.com/docker/docker-credential-helpers v0.6.4
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/ghodss/yaml v1.0.0
