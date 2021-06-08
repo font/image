@@ -19,14 +19,9 @@ const (
 // TODO: SignManifest returns a signature for manifest as the specified dockerReference,
 // using mech and its keyless signing.
 func SignManifest(ctx context.Context, manifestDigest digest.Digest, dockerReference string, mech SigstoreSigningMechanism) ([]byte, []byte, error) {
-	sigPayload, err := newCosignSignature(manifestDigest, dockerReference).MarshalJSON()
+	sigPayload, err := NewCosignSignature(manifestDigest, dockerReference).MarshalJSON()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "payload")
-	}
-
-	err = mech.InitSigner()
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "init signer")
 	}
 
 	return mech.Sign(sigPayload)
@@ -40,13 +35,13 @@ func SignManifest(ctx context.Context, manifestDigest digest.Digest, dockerRefer
 	//return nil
 }
 
-func signatureImageTagForDigest(digest string) string {
+func SignatureImageTagForDigest(digest string) string {
 	// sha256:... -> sha256-...
 	return strings.ReplaceAll(digest, ":", "-") + ".sig"
 }
 
 // TlogServer returns the name of the tlog server, can be overwritten via env var
-func tLogServer() string {
+func TLogServer() string {
 	if s := os.Getenv(serverEnv); s != "" {
 		return s
 	}

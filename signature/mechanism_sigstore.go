@@ -2,7 +2,6 @@ package signature
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sigstore/cosign/pkg/cosign/fulcio"
@@ -35,8 +34,7 @@ func (s *sigstoreSigningMechanism) SupportsSigning() error {
 
 }
 
-func (s *sigstoreSigningMechanism) InitSigner() error {
-	fmt.Println("Generating ephemeral keys...")
+func (s *sigstoreSigningMechanism) GenerateKeys() error {
 	signer, err := fulcio.NewSigner(s.ctx, "")
 	if err != nil {
 		return errors.Wrap(err, "getting key from Fulcio")
@@ -46,25 +44,14 @@ func (s *sigstoreSigningMechanism) InitSigner() error {
 	return nil
 }
 
-// Sign creates a (non-detached) signature of input using keyIdentity.
+// Sign creates a signature using the payload input.
 // Fails with a SigningNotSupportedError if the mechanism does not support signing.
 func (s *sigstoreSigningMechanism) Sign(payload []byte) ([]byte, []byte, error) {
-	fmt.Println("Signing payload...")
-	signature, signedVal, err := s.signer.Sign(s.ctx, payload)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "signing")
-	}
-	return signature, signedVal, err
+	return s.signer.Sign(s.ctx, payload)
 }
 
-func (s *sigstoreSigningMechanism) Upload(pemBytes, digest, signedMsg, payload []byte, rekorURL string) error {
-	fmt.Println("Sending entry to transparency log")
-	tlogEntry, err := tlog.UploadToRekor([]byte(s.cert), digest, signedMsg, tLogServer(), payload)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Rekor entry successful. Index number: ", tlogEntry)
-	return nil
+func (s *sigstoreSigningMechanism) Upload(digest, signedMsg, payload []byte, rekorURL string) (string, error) {
+	return tlog.UploadToRekor([]byte(s.cert), digest, signedMsg, rekorURL, payload)
 }
 
 // Verify parses unverifiedSignature and returns the content and the signer's identity

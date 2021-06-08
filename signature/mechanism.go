@@ -41,11 +41,11 @@ type SigstoreSigningMechanism interface {
 	Close() error
 	// SupportsSigning returns nil if the mechanism supports signing, or a SigningNotSupportedError.
 	SupportsSigning() error
-	InitSigner() error
+	GenerateKeys() error
 	// Sign creates a (non-detached) signature of input using keyIdentity.
 	// Fails with a SigningNotSupportedError if the mechanism does not support signing.
 	Sign(payload []byte) ([]byte, []byte, error)
-	Upload(pemBytes, digest, signedMsg, payload []byte, rekorURL string) error
+	Upload(digest, signedMsg, payload []byte, rekorURL string) (string, error)
 	// Verify parses unverifiedSignature and returns the content and the signer's identity
 	Verify(unverifiedSignature []byte) (contents []byte, keyIdentity string, err error)
 	// UntrustedSignatureContents returns UNTRUSTED contents of the signature WITHOUT ANY VERIFICATION,

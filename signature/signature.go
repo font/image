@@ -209,7 +209,7 @@ type cosignSignature struct {
 
 // newCosignSignature returns a cosignSignature object with
 // the specified primary contents and appropriate metadata.
-func newCosignSignature(dockerManifestDigest digest.Digest, dockerReference string) cosignSignature {
+func NewCosignSignature(dockerManifestDigest digest.Digest, dockerReference string) cosignSignature {
 	// Use intermediate variables for these values so that we can take their addresses.
 	// Golang guarantees that they will have a new address on every execution.
 	return cosignSignature{
