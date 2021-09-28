@@ -668,6 +668,44 @@ sigExists:
 	return nil
 }
 
+// PutSigstoreSignatures uploads a set of signatures to the relevant container
+// registry.  If instanceDigest is not nil, it contains a digest of the
+// specific manifest instance to upload the signatures for (when the primary
+// manifest is a manifest list); this should always be nil if the primary
+// manifest is not a manifest list.
+func (d *dockerImageDestination) PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest) error {
+	// Do not fail if we don’t really need to support signatures.
+	if len(signatures) == 0 {
+		return nil
+	}
+	if instanceDigest == nil {
+		if d.manifestDigest == "" {
+			// This shouldn’t happen, ImageDestination users are required to call PutManifest before PutSigstoreSignatures
+			return errors.Errorf("Unknown manifest digest, can't add signatures")
+		}
+		instanceDigest = &d.manifestDigest
+	}
+
+	if err := d.c.detectProperties(ctx); err != nil {
+		return err
+	}
+
+	if !d.c.supportsSigstoreSignatures {
+		return errors.Errorf("Internal error: registry does not support sigstore signatures")
+	}
+
+	url, err := sigstoreSignatureURL(d.ref, *instanceDigest, d.c.scheme)
+	if err != nil {
+		return err
+	}
+
+	// TODO(font): handle uploading multiple signatures?
+	if err := d.putOneSignature(url, signatures[0]); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Commit marks the process of storing the image as successful and asks for the image to be persisted.
 // unparsedToplevel contains data about the top-level manifest of the source (which may be a single-arch image or a manifest list
 // if PutManifest was only called for the single-arch image with instanceDigest == nil), primarily to allow lookups by the

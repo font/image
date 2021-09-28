@@ -6,6 +6,7 @@ import (
 
 	"github.com/containers/image/v5/docker/reference"
 	publicTypes "github.com/containers/image/v5/types"
+	"github.com/opencontainers/go-digest"
 )
 
 // ImageDestinationWithOptions is an internal extension to the ImageDestination
@@ -91,9 +92,16 @@ func (e BadPartialRequestError) Error() string {
 }
 
 type ImageDestinationSigstore interface {
-	// SupportsSigstoreSignatures returns an error (to be displayed to the user) if the
-	// destination certainly can't store Sigstore signatures.
+	// SupportsSigstoreSignatures returns an error (to be displayed to the
+	// user) if the destination certainly can't store Sigstore signatures.
 	// Note: It is still possible for PutSignatures to fail if
 	// SupportsSigstoreSignatures returns nil.
 	SupportsSigstoreSignatures(ctx context.Context) error
+	// PutSigstoreSignatures writes a set of signatures to the Sigstore image
+	// destination.  If instanceDigest is not nil, it contains a digest of the
+	// specific manifest instance to write or overwrite the signatures for
+	// (when the primary manifest is a manifest list); this should always be
+	// nil if the primary manifest is not a manifest list.  MUST be called
+	// after PutManifest (signatures may reference manifest contents).
+	PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest) error
 }

@@ -785,8 +785,15 @@ func (c *copier) copyOneImage(ctx context.Context, policyContext *signature.Poli
 	}
 
 	c.Printf("Storing signatures\n")
-	if err := c.dest.PutSignatures(ctx, sigs, targetInstance); err != nil {
-		return nil, "", "", errors.Wrap(err, "writing signatures")
+	destSigstore, ok := c.dest.(internalTypes.ImageDestinationSigstore)
+	if ok {
+		if err := destSigstore.PutSigstoreSignatures(ctx, sigs, targetInstance); err != nil {
+			return nil, "", "", fmt.Errorf("writing signatures: %w", err)
+		}
+	} else {
+		if err := c.dest.PutSignatures(ctx, sigs, targetInstance); err != nil {
+			return nil, "", "", errors.Wrap(err, "writing signatures")
+		}
 	}
 
 	return manifestBytes, retManifestType, retManifestDigest, nil
