@@ -502,6 +502,7 @@ func (s *dockerImageSource) getSigstoreSignatures(ctx context.Context, instanceD
 	if err != nil {
 		return nil, err
 	}
+	// TODO(font): handle multiple signatures in image manifest
 	signature, _, err := s.getOneSignature(ctx, url)
 	if err != nil {
 		return nil, err

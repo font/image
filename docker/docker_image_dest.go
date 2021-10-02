@@ -513,7 +513,7 @@ func (d *dockerImageDestination) PutSignatures(ctx context.Context, signatures [
 	case d.c.supportsSignatures:
 		return d.putSignaturesToAPIExtension(ctx, signatures, *instanceDigest)
 	case d.c.signatureBase != nil:
-		return d.putSignaturesToLookaside(signatures, *instanceDigest)
+		return d.putSignaturesToLookaside(ctx, signatures, *instanceDigest)
 	default:
 		return errors.Errorf("Internal error: X-Registry-Supports-Signatures extension not supported, and lookaside should not be empty configuration")
 	}
@@ -521,7 +521,7 @@ func (d *dockerImageDestination) PutSignatures(ctx context.Context, signatures [
 
 // putSignaturesToLookaside implements PutSignatures() from the lookaside location configured in s.c.signatureBase,
 // which is not nil, for a manifest with manifestDigest.
-func (d *dockerImageDestination) putSignaturesToLookaside(signatures [][]byte, manifestDigest digest.Digest) error {
+func (d *dockerImageDestination) putSignaturesToLookaside(ctx context.Context, signatures [][]byte, manifestDigest digest.Digest) error {
 	// FIXME? This overwrites files one at a time, definitely not atomic.
 	// A failure when updating signatures with a reordered copy could lose some of them.
 
@@ -533,7 +533,7 @@ func (d *dockerImageDestination) putSignaturesToLookaside(signatures [][]byte, m
 	// NOTE: Keep this in sync with docs/signature-protocols.md!
 	for i, signature := range signatures {
 		url := signatureStorageURL(d.c.signatureBase, manifestDigest, i)
-		err := d.putOneSignature(url, signature)
+		err := d.putOneSignature(ctx, url, signature, nil)
 		if err != nil {
 			return err
 		}
@@ -559,7 +559,7 @@ func (d *dockerImageDestination) putSignaturesToLookaside(signatures [][]byte, m
 
 // putOneSignature stores one signature to url.
 // NOTE: Keep this in sync with docs/signature-protocols.md!
-func (d *dockerImageDestination) putOneSignature(url *url.URL, signature []byte) error {
+func (d *dockerImageDestination) putOneSignature(ctx context.Context, url *url.URL, signature []byte, cache *types.BlobInfoCache) error {
 	switch url.Scheme {
 	case "file":
 		logrus.Debugf("Writing to %s", url.Path)
@@ -573,7 +573,14 @@ func (d *dockerImageDestination) putOneSignature(url *url.URL, signature []byte)
 		}
 		return nil
 
-	case "http", "https":
+	case "http", "https": // Sigstore only
+		blobInfo := createBlobInfoForPayload(signature)
+		blobInfo, err := d.PutBlob(ctx, bytes.NewReader(signature), blobInfo, *cache, false)
+		if err != nil {
+			return err
+		}
+		// createManifestForBlob()
+		// PutManifest()
 		return errors.Errorf("Writing directly to a %s sigstore %s is not supported. Configure a sigstore-staging: location", url.Scheme, url.String())
 	default:
 		return errors.Errorf("Unsupported scheme when writing signature to %s", url.String())
@@ -673,7 +680,7 @@ sigExists:
 // specific manifest instance to upload the signatures for (when the primary
 // manifest is a manifest list); this should always be nil if the primary
 // manifest is not a manifest list.
-func (d *dockerImageDestination) PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest) error {
+func (d *dockerImageDestination) PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest, cache types.BlobInfoCache) error {
 	// Do not fail if we don’t really need to support signatures.
 	if len(signatures) == 0 {
 		return nil
@@ -700,7 +707,7 @@ func (d *dockerImageDestination) PutSigstoreSignatures(ctx context.Context, sign
 	}
 
 	// TODO(font): handle uploading multiple signatures?
-	if err := d.putOneSignature(url, signatures[0]); err != nil {
+	if err := d.putOneSignature(ctx, url, signatures[0], &cache); err != nil {
 		return err
 	}
 	return nil

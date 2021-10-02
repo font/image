@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/containers/image/v5/docker/reference"
+	"github.com/containers/image/v5/types"
 	publicTypes "github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 )
@@ -103,5 +104,5 @@ type ImageDestinationSigstore interface {
 	// (when the primary manifest is a manifest list); this should always be
 	// nil if the primary manifest is not a manifest list.  MUST be called
 	// after PutManifest (signatures may reference manifest contents).
-	PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest) error
+	PutSigstoreSignatures(ctx context.Context, signatures [][]byte, instanceDigest *digest.Digest, cache types.BlobInfoCache) error
 }
