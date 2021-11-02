@@ -5,7 +5,6 @@ go 1.11
 require (
 	github.com/14rcole/gopopulate v0.0.0-20180821133914-b175b219e774 // indirect
 	github.com/BurntSushi/toml v0.3.1
-	github.com/containers/image v3.0.2+incompatible // indirect
 	github.com/containers/libtrust v0.0.0-20190913040956-14b96171aa3b
 	github.com/containers/ocicrypt v1.1.1
 	github.com/containers/storage v1.30.3
@@ -20,7 +19,7 @@ require (
 	github.com/imdario/mergo v0.3.12
 	github.com/klauspost/compress v1.12.2
 	github.com/klauspost/pgzip v1.2.5
-	github.com/manifoldco/promptui v0.8.0
+	github.com/manifoldco/promptui v0.9.0
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mtrmac/gpgme v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
